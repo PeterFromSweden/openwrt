@@ -1,0 +1,109 @@
+diff -ur orig/common/CMakeLists.txt openwrt-patched/common/CMakeLists.txt
+--- orig/common/CMakeLists.txt	2012-02-13 00:22:03.000000000 +0200
++++ openwrt-patched/common/CMakeLists.txt	2012-02-13 01:54:48.000000000 +0200
+@@ -64,6 +64,11 @@
+ 	)
+ ELSE (APPLE)
+ 	#### Linux ####
++	FIND_LIBRARY(ICONV_LIBRARY iconv PATHS "$ENV{ICONV_PREFIX}/lib")
++	INCLUDE_DIRECTORIES("$ENV{ICONV_PREFIX}/include")
++	LINK_DIRECTORIES("$ENV{ICONV_PREFIX}/lib")
++	LINK_LIBRARIES("-L$ENV{ICONV_PREFIX}/lib" -liconv)
++	MESSAGE(INCLUDE_DIRECTORIES("$ENV{ICONV_PREFIX}/include"))
+ 	ADD_DEFINITIONS( -D_LINUX )
+ 	LIST(APPEND  telldus-common_SRCS
+ 		Event_unix.cpp
+@@ -72,6 +77,7 @@
+ 	)
+ ENDIF (APPLE)
+ 
++#	TARGET_LINK_LIBRARIES(${telldus-core_TARGET} -liconv)
+ 
+ ######## Configuring  ########
+ 
+diff -ur orig/common/Strings.cpp openwrt-patched/common/Strings.cpp
+--- orig/common/Strings.cpp	2012-02-13 01:10:01.000000000 +0200
++++ openwrt-patched/common/Strings.cpp	2012-02-13 01:16:49.000000000 +0200
+@@ -54,7 +54,7 @@
+ 	char *outPointer = outString;
+ 
+ 	iconv_t convDesc = iconv_open(WCHAR_T_ENCODING, "UTF-8");
+-	iconv(convDesc, &inPointer, &utf8Length, &outPointer, &outbytesLeft);
++	iconv(convDesc, (const char **)&inPointer, &utf8Length, &outPointer, &outbytesLeft);
+ 	iconv_close(convDesc);
+ 
+ 	std::wstring retval( (wchar_t *)outString );
+@@ -198,7 +198,7 @@
+ 	char *outPointer = outString;
+ 
+ 	iconv_t convDesc = iconv_open("UTF-8", WCHAR_T_ENCODING);
+-	iconv(convDesc, &inPointer, &wideSize, &outPointer, &outbytesLeft);
++	iconv(convDesc, (const char **)&inPointer, &wideSize, &outPointer, &outbytesLeft);
+ 	iconv_close(convDesc);
+ 
+ 	std::string retval(outString);
+Only in openwrt-patched: old
+diff -ur orig/service/CMakeLists.txt openwrt-patched/service/CMakeLists.txt
+--- orig/service/CMakeLists.txt	2012-02-14 20:32:31.000000000 +0200
++++ openwrt-patched/service/CMakeLists.txt	2012-02-18 21:30:13.000000000 +0200
+@@ -245,8 +245,8 @@
+ 	INSTALL(FILES tellstick.conf
+ 		DESTINATION ${SYSCONF_INSTALL_DIR}
+ 	)
+-	INSTALL(FILES telldus-core.conf
+-		DESTINATION ${STATE_INSTALL_DIR}
+-		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
+-	)
++#	INSTALL(FILES telldus-core.conf
++#		DESTINATION ${STATE_INSTALL_DIR}
++#		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
++#	)
+ ENDIF (UNIX AND NOT APPLE)
+diff -ur orig/service/Log.h openwrt-patched/service/Log.h
+--- orig/service/Log.h	2012-02-13 01:20:31.000000000 +0200
++++ openwrt-patched/service/Log.h	2012-02-13 01:20:54.000000000 +0200
+@@ -2,6 +2,7 @@
+ #define LOG_H
+ 
+ #include <stdio.h>
++#include <stdarg.h>
+ 
+ class Log {
+ public:
+diff -ur orig/tdadmin/CMakeLists.txt openwrt-patched/tdadmin/CMakeLists.txt
+--- orig/tdadmin/CMakeLists.txt	2012-02-13 02:11:25.000000000 +0200
++++ openwrt-patched/tdadmin/CMakeLists.txt	2012-02-13 02:16:06.000000000 +0200
+@@ -38,8 +38,11 @@
+ 		${ARGP_LIBRARY}
+ 	)
+ ELSE (WIN32)
++	LINK_DIRECTORIES("$ENV{ICONV_PREFIX}/lib")
++	TARGET_LINK_LIBRARIES(tdadmin "-L$ENV{ICONV_PREFIX}/lib" -liconv)
+ 	TARGET_LINK_LIBRARIES(tdadmin
+ 		${CMAKE_BINARY_DIR}/client/libtelldus-core.so
++		-largp
+ 	)
+ ENDIF (WIN32)
+ 
+diff -ur orig/tdadmin/udev.sh openwrt-patched/tdadmin/udev.sh
+--- orig/tdadmin/udev.sh	2012-02-14 23:00:22.000000000 +0200
++++ openwrt-patched/tdadmin/udev.sh	2012-02-14 23:00:34.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+ if [ "${ID_VENDOR_ID}" == "1781" ]; then
+ 	if [ "${ACTION}" == "add" ]; then
+diff -ur orig/tdtool/CMakeLists.txt openwrt-patched/tdtool/CMakeLists.txt
+--- orig/tdtool/CMakeLists.txt	2012-02-13 01:56:48.000000000 +0200
++++ openwrt-patched/tdtool/CMakeLists.txt	2012-02-13 02:01:45.000000000 +0200
+@@ -35,6 +35,9 @@
+ 		TelldusCore
+ 	)
+ ELSE (WIN32)
++	LINK_DIRECTORIES("$ENV{ICONV_PREFIX}/lib")
++	TARGET_LINK_LIBRARIES(tdtool "-L$ENV{ICONV_PREFIX}/lib" -liconv)
++	MESSAGE(LINK_LIBRARIES("$ENV{ICONV_PREFIX}/lib"))
+ 	TARGET_LINK_LIBRARIES(tdtool
+ 		${CMAKE_BINARY_DIR}/client/libtelldus-core.so
+ 	)
