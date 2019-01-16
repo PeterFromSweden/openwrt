@@ -1,0 +1,83 @@
+--- a/common/Socket_unix.cpp
++++ b/common/Socket_unix.cpp
+@@ -8,6 +8,7 @@
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <sys/socket.h>
++#include <sys/select.h> // POSIX.1-2001
+ #include <sys/un.h>
+ #include <fcntl.h>
+ #include <math.h>
+--- a/service/ConnectionListener_unix.cpp
++++ b/service/ConnectionListener_unix.cpp
+@@ -13,6 +13,7 @@
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <string>
++#include <cstring> // strcpy
+ 
+ #include "service/ConnectionListener.h"
+ #include "common/Socket.h"
+--- a/service/ProtocolIkea.cpp
++++ b/service/ProtocolIkea.cpp
+@@ -23,7 +23,7 @@ int ProtocolIkea::methods() const {
+ 
+ std::string ProtocolIkea::getStringForMethod(int method, unsigned char level, Controller *) {
+ 	const char B1[] = {84, 84, 0};
+-	const char B0[] = {170, 0};
++	const char B0[] = {(char)170, 0};
+ 
+ 	int intSystem = this->getIntParameter(L"system", 1, 16)-1;
+ 	int intFadeStyle = TelldusCore::comparei(this->getStringParameter(L"fade", L"true"), L"true");
+--- a/service/ProtocolX10.cpp
++++ b/service/ProtocolX10.cpp
+@@ -22,7 +22,7 @@ int ProtocolX10::methods() const {
+ std::string ProtocolX10::getStringForMethod(int method, unsigned char data, Controller *controller) {
+ 	const unsigned char S = 59, L = 169;
+ 	const char B0[] = {S, S, 0};
+-	const char B1[] = {S, L, 0};
++	const char B1[] = {S, (char)L, 0};
+ 	const unsigned char START_CODE[] = {'S', 255, 1, 255, 1, 255, 1, 100, 255, 1, 180, 0};
+ 	const unsigned char STOP_CODE[] = {S, 0};
+ 
+--- a/tdadmin/CMakeLists.txt
++++ b/tdadmin/CMakeLists.txt
+@@ -38,8 +38,11 @@ ELSEIF (CMAKE_SYSTEM_NAME MATCHES "FreeB
+ 		${ARGP_LIBRARY}
+ 	)
+ ELSE (WIN32)
++	# Linux, in this case openwrt that requires argp-standalone
++	FIND_LIBRARY(ARGP_LIBRARY argp)
+ 	TARGET_LINK_LIBRARIES(tdadmin
+ 		${CMAKE_BINARY_DIR}/client/libtelldus-core.so
++		${ARGP_LIBRARY}
+ 	)
+ ENDIF (WIN32)
+ 
+--- a/service/CMakeLists.txt
++++ b/service/CMakeLists.txt
+@@ -258,10 +258,10 @@ IF (UNIX AND NOT APPLE)
+ 	INSTALL(FILES tellstick.conf
+ 		DESTINATION ${SYSCONF_INSTALL_DIR}
+ 	)
+-	INSTALL(FILES telldus-core.conf
+-		DESTINATION ${STATE_INSTALL_DIR}
+-		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
+-	)
++#	INSTALL(FILES telldus-core.conf
++#		DESTINATION ${STATE_INSTALL_DIR}
++#		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
++#	)
+ ENDIF (UNIX AND NOT APPLE)
+ 
+ IF(ENABLE_TESTING)
+--- a/service/tellstick.conf
++++ b/service/tellstick.conf
+@@ -1,5 +1,5 @@
+-user = "nobody"
+-group = "plugdev"
++user = "root"
++group = "root"
+ ignoreControllerConfirmation = "false"
+ device {
+   id = 1
