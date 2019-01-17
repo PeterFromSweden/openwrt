@@ -27,16 +27,11 @@ define Package/telldus-core
 	CATEGORY:=Utilities
 	TITLE:=Telldus TellStick USB interface
 	URL:=http://www.telldus.com
-	DEPENDS:=+confuse +libftdi +libstdcpp $(ICONV_DEPENDS)
+	DEPENDS:=+confuse +libftdi +libstdcpp +argp-standalone +libiconv-full $(ICONV_DEPENDS)
 endef
-# Note: argp-standalone is needed for compiling, but is not listed in "DEPENDS";
-# there is no package called "argp-standalone" (it is needed at build time only)
-
-#	echo $(ICONV_PREFIX)
-#	(env | grep ICONV_)
+# Note: argp-standalone is needed for compiling (build time only)
 
 define Build/Configure
-	echo $(ICONV_PREFIX) && \
 	cd $(PKG_BUILD_DIR) && \
 	$(TARGET_CONFIGURE_OPTS) \
 	ICONV_PREFIX=$(ICONV_PREFIX) cmake --debug-output \
