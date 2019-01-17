@@ -10,6 +10,7 @@ PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DEPENDS:=argp-standalone 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
 PKG_HASH:=a20f6c74814afc23312d2c93ebbb37fdea9deaaee05ae7b6a6275e11e4662014
@@ -27,9 +28,8 @@ define Package/telldus-core
 	CATEGORY:=Utilities
 	TITLE:=Telldus TellStick USB interface
 	URL:=http://www.telldus.com
-	DEPENDS:=+confuse +libftdi +libstdcpp +argp-standalone +libiconv-full $(ICONV_DEPENDS)
+	DEPENDS:=+confuse +libftdi +libstdcpp +libiconv-full $(ICONV_DEPENDS)
 endef
-# Note: argp-standalone is needed for compiling (build time only)
 
 define Build/Configure
 	cd $(PKG_BUILD_DIR) && \
